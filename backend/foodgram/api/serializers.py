@@ -4,9 +4,24 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from django.http import Http404
 
+from recipes.models import Tag, Ingredient
 from users.models import Follow
 
 User = get_user_model()
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = ('name', 'measurement_unit', 'id')
+
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = ('name', 'color', 'slug', 'id')
 
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):

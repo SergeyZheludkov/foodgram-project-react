@@ -1,3 +1,4 @@
+
 from datetime import timedelta
 from pathlib import Path
 
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

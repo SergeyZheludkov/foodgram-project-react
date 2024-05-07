@@ -1,5 +1,6 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action, permission_classes
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -8,10 +9,26 @@ from rest_framework.response import Response
 
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
-    CustomAuthTokenSerializer,
+    CustomAuthTokenSerializer, TagSerializer, IngredientSerializer
 )
+from recipes.models import Tag, Ingredient
 
 User = get_user_model()
+
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    pagination_class = None
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('name',)
+    search_fields = ('^name',)
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    pagination_class = None
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
