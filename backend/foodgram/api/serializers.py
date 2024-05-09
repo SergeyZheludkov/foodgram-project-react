@@ -1,10 +1,15 @@
+import base64
+
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.base import ContentFile
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from django.http import Http404
 
-from recipes.models import Tag, Ingredient
+from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart, Tag,
+                            TagRecipe, IngredientRecipe)
 from users.models import Follow
 
 User = get_user_model()
@@ -53,8 +58,85 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return Follow.objects.filter(user=user, following=following).exists()
 
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+        return super().to_internal_value(data)
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    author = CustomUserSerializer(read_only=True, many=False)
+    # ingredients = IngredientSerializer(read_only=True, many=True)
+    ingredients = serializers.SerializerMethodField()
+    tags = TagSerializer(read_only=True, many=True)
+    image = Base64ImageField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'author', 'ingredients', 'tags', 'image', 'name',
+                  'text', 'cooking_time', 'is_favorited',
+                  'is_in_shopping_cart')
+
+    def get_ingredients(self, obj):
+        ingredients = obj.ingredients.values(
+            'id', 'name', 'measurement_unit',
+            amount=F('ingredientrecipe__amount')
+        )
+        return ingredients
+
+    def get_is_favorited(self, obj):
+        user = self.context.get('request').user
+        if not user.is_active:  # обработка анонимов
+            return False
+        recipe = Recipe.objects.get(pk=obj.id)
+        return Favorite.objects.filter(user=user, recipe=recipe).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        if not user.is_active:  # обработка анонимов
+            return False
+        recipe = Recipe.objects.get(pk=obj.id)
+        return ShoppingCart.objects.filter(user=user, recipe=recipe).exists()
+
+    def create(self, validated_data):
+        """Привязка tags и ingredients к recipe в ручном режиме."""
+        if 'ingredients' not in self.initial_data or (
+            self.initial_data['ingredients'] == []
+        ):
+            raise serializers.ValidationError('Нет данных об ингредиентах')
+        
+        if 'tags' not in self.initial_data or self.initial_data['tags'] == []:
+            raise serializers.ValidationError('Нет данных о тэге')
+
+        recipe = Recipe.objects.create(**validated_data)
+        
+        ingredients = self.initial_data['ingredients']
+        for ingredient in ingredients:
+            print('ingredient =', ingredient)
+            current_ingredient = get_object_or_404(Ingredient,
+                                                   pk=ingredient['id'])
+            IngredientRecipe.objects.create(
+                ingredient=current_ingredient,
+                recipe=recipe,
+                amount=ingredient['amount']
+            )
+
+        tags_id = self.initial_data['tags']
+        for tag_id in tags_id:
+            tag = get_object_or_404(Tag, pk=tag_id)
+            TagRecipe.objects.create(tag=tag, recipe=recipe)
+
+        return recipe
+
+
 class CustomAuthTokenSerializer(serializers.Serializer):
     """Изменение пары авторизации с username-password на email-password."""
+
     email = serializers.CharField(label='Email', write_only=True)
     password = serializers.CharField(
         label='Password', style={'input_type': 'password'},

@@ -1,19 +1,34 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
-    CustomAuthTokenSerializer, TagSerializer, IngredientSerializer
+    CustomAuthTokenSerializer, TagSerializer, IngredientSerializer,
+    RecipeSerializer
 )
-from recipes.models import Tag, Ingredient
+from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+    permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    filterset_fields = ('author', 'tags__slug')
+    search_fields = ('author', 'tags__slug')
+
+    def perform_create(self, serializer):
+        """Переопределение единичной операции сохранения объекта модели."""
+        serializer.save(author=self.request.user)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
