@@ -1,19 +1,20 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .filters import RecipeFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
     CustomAuthTokenSerializer, TagSerializer, IngredientSerializer,
     RecipeSerializer
 )
-from recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Ingredient, Favorite, Recipe, ShoppingCart, Tag
 
 User = get_user_model()
 
@@ -22,13 +23,41 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('author', 'tags__slug')
-    search_fields = ('author', 'tags__slug')
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         """Переопределение единичной операции сохранения объекта модели."""
         serializer.save(author=self.request.user)
+
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+
+        is_favorited = self.request.query_params.get('is_favorited')
+        queryset = self.queryset_filter(queryset, Favorite, is_favorited)
+
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart')
+        queryset = self.queryset_filter(queryset, ShoppingCart,
+                                        is_in_shopping_cart)
+
+        return queryset
+
+    def queryset_filter(self, queryset, model, param):
+        """Фильтрация по параметрам, которых нет в модели Recipe."""
+        if param is not None:
+            param = int(param)
+            objs = model.objects.all()
+            recipe_ids = []
+            for obj in objs:
+                if obj.user == self.request.user:
+                    recipe_ids.append(obj.recipe.id)
+            if param == 1:
+                queryset = queryset.filter(id__in=recipe_ids)
+            elif param == 0:
+                queryset = queryset.exclude(id__in=recipe_ids)
+
+        return queryset
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

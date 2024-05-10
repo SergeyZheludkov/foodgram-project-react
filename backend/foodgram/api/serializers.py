@@ -69,7 +69,6 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True, many=False)
-    # ingredients = IngredientSerializer(read_only=True, many=True)
     ingredients = serializers.SerializerMethodField()
     tags = TagSerializer(read_only=True, many=True)
     image = Base64ImageField()
@@ -104,20 +103,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(user=user, recipe=recipe).exists()
 
     def create(self, validated_data):
-        """Привязка tags и ingredients к recipe в ручном режиме."""
-        if 'ingredients' not in self.initial_data or (
-            self.initial_data['ingredients'] == []
-        ):
-            raise serializers.ValidationError('Нет данных об ингредиентах')
-        
-        if 'tags' not in self.initial_data or self.initial_data['tags'] == []:
-            raise serializers.ValidationError('Нет данных о тэге')
+        """Валидация и привязка tags и ingredients к recipe в ручном режиме."""
+        self.custom_validate_tags()
+        self.custom_validate_ingredients()
 
         recipe = Recipe.objects.create(**validated_data)
-        
+
         ingredients = self.initial_data['ingredients']
         for ingredient in ingredients:
-            print('ingredient =', ingredient)
             current_ingredient = get_object_or_404(Ingredient,
                                                    pk=ingredient['id'])
             IngredientRecipe.objects.create(
@@ -132,6 +125,45 @@ class RecipeSerializer(serializers.ModelSerializer):
             TagRecipe.objects.create(tag=tag, recipe=recipe)
 
         return recipe
+    
+    def update(self, instance, validated_data):
+        self.custom_validate_tags()
+        self.custom_validate_ingredients()
+        return super().update(instance, validated_data)
+
+    def custom_validate_tags(self):
+        if 'tags' not in self.initial_data or self.initial_data['tags'] == []:
+            raise serializers.ValidationError('Нет данных о тэге')
+
+        tags_id = self.initial_data['tags']
+
+        if len(tags_id) != len(set(tags_id)):
+            raise serializers.ValidationError('Тэги повторяются!')
+
+        for tag_id in tags_id:
+            if not Tag.objects.filter(id=tag_id).exists():
+                raise serializers.ValidationError('Проверьте id тэгов!')
+
+    def custom_validate_ingredients(self):
+        if 'ingredients' not in self.initial_data or (
+            self.initial_data['ingredients'] == []
+        ):
+            raise serializers.ValidationError('Нет данных об ингредиентах')
+
+        ingredients = self.initial_data['ingredients']
+
+        ingredient_ids = []
+
+        for ingredient in ingredients:
+            if not Ingredient.objects.filter(id=ingredient['id']).exists():
+                raise serializers.ValidationError('Проверьте id ингредиентов!')
+            ingredient_ids.append(ingredient['id'])
+            if ingredient['amount'] < 1:
+                raise serializers.ValidationError(
+                    'Количество ингредиента должно быть не меньше 1')
+
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError('Ингредиенты повторяются!')
 
 
 class CustomAuthTokenSerializer(serializers.Serializer):

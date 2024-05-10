@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
@@ -16,6 +17,7 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'тег'
         verbose_name_plural = 'Теги'
+        default_related_name = 'tags'
 
     def __str__(self):
         return self.slug
@@ -46,7 +48,8 @@ class Recipe(models.Model):
     image = models.ImageField('Картинка', upload_to='recipes/images/')
     name = models.CharField('Название', max_length=200, unique=True)
     text = models.TextField('Описание')
-    cooking_time = models.PositiveSmallIntegerField('Время приготовления, мин')
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления, мин', validators=[MinValueValidator(1)])
 
     class Meta:
         verbose_name = 'рецепт'
@@ -62,7 +65,8 @@ class IngredientRecipe(models.Model):
                                    verbose_name='Ингредиент')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
                                verbose_name='Рецепт')
-    amount = models.PositiveSmallIntegerField(verbose_name='Количество')
+    amount = models.PositiveSmallIntegerField(
+        verbose_name='Количество', validators=[MinValueValidator(1)])
 
     class Meta:
         constraints = [
@@ -94,10 +98,10 @@ class Favorite(models.Model):
     """Модель избранного."""
 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='user',
+        User, on_delete=models.CASCADE, related_name='user_in_favorite',
         verbose_name='Пользователь')
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='recipe',
+        Recipe, on_delete=models.CASCADE, related_name='recipe_in_favorite',
         verbose_name='Рецепт в избранном')
 
     class Meta:
