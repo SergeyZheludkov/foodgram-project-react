@@ -1,7 +1,6 @@
 import base64
 
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db.models import F
 from django.shortcuts import get_object_or_404
@@ -30,6 +29,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор при регистрации нового пользователя."""
 
     class Meta:
         model = User
@@ -56,6 +56,25 @@ class CustomUserSerializer(serializers.ModelSerializer):
             return False
         following = User.objects.get(pk=obj.id)
         return Follow.objects.filter(user=user, following=following).exists()
+
+
+class UserSubscribeSerializer(CustomUserSerializer):
+    recipes_count = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+
+    class Meta(CustomUserSerializer.Meta):
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes_count', 'recipes')
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj).count()
+
+    def get_recipes(self, obj):
+        recipes_limit = self.context.get('rec_limit')
+        if recipes_limit:
+            recipes_limit = int(recipes_limit)
+        return Recipe.objects.filter(author=obj).values(
+            'id', 'image', 'name', 'cooking_time')[:recipes_limit]
 
 
 class Base64ImageField(serializers.ImageField):
@@ -164,6 +183,13 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError('Ингредиенты повторяются!')
+
+
+class RecipeShoppingCartSerializer(RecipeSerializer):
+
+    class Meta(RecipeSerializer.Meta):
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class CustomAuthTokenSerializer(serializers.Serializer):

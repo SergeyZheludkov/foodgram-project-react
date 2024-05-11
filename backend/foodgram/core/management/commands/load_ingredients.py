@@ -5,10 +5,10 @@ from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from recipes.models import Ingredient
 
-# full list
+# full list (more than 2000 items)
 # DIR_DATA = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / 'data'
 
-# shorten list
+# shorten list (50 items)
 DIR_DATA = Path(__file__).resolve().parent
 
 DATA = (
