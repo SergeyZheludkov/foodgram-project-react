@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from recipes.models import Ingredient
 
 # full list (more than 2000 items)
-DIR_DATA = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / 'data'
+DIR_DATA = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
 
 # shorten list (50 items)
 # DIR_DATA = Path(__file__).resolve().parent
@@ -19,8 +19,9 @@ DATA = (
 class Command(BaseCommand):
 
     def load_obj(self, filename, obj, fields):
+        path = DIR_DATA / 'data'
         try:
-            with open(f'{DIR_DATA}/{filename}', encoding='utf-8') as file_data:
+            with open(f'{path}/{filename}', encoding='utf-8') as file_data:
                 reader = csv.reader(file_data)
                 for row in reader:
                     object_value = {
