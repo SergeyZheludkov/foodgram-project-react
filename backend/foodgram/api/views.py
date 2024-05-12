@@ -127,16 +127,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.shopping_cart_favorite_actions(request, pk, Favorite)
 
     def shopping_cart_favorite_actions(self, request, pk, model):
+
+        if request.method == 'DELETE':
+            recipe = get_object_or_404(Recipe, pk=pk)
+            obj = model.objects.filter(user=request.user, recipe=recipe)
+            if not obj.exists():
+                return Response('Рецепт не отмечен!',
+                                status=status.HTTP_400_BAD_REQUEST)
+            obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         try:
             recipe = get_object_or_404(Recipe, pk=pk)
         except Http404:
             return Response('Рецепт с таким номером не найден!',
                             status=status.HTTP_400_BAD_REQUEST)
-
-        if request.method == 'DELETE':
-            model.objects.filter(user=request.user, 
-                                 recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
 
         if model.objects.filter(user=request.user, recipe=recipe).exists():
             return Response('Рецепт уже отмечен!',
@@ -145,6 +150,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         model.objects.create(user=request.user, recipe=recipe)
         serializer = self.get_serializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
@@ -207,9 +213,12 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         following = get_object_or_404(User, pk=pk)
 
         if request.method == 'DELETE':
-            Follow.objects.filter(
-                user=request.user, following=following
-            ).delete()
+            follow_obj = Follow.objects.filter(user=request.user,
+                                               following=following)
+            if not follow_obj.exists():
+                return Response('Такой подписки нет!',
+                                status=status.HTTP_400_BAD_REQUEST)
+            follow_obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if following == request.user:

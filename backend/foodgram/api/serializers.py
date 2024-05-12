@@ -101,11 +101,8 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'is_in_shopping_cart')
 
     def get_ingredients(self, obj):
-        ingredients = obj.ingredients.values(
-            'id', 'name', 'measurement_unit',
-            amount=F('ingredientrecipe__amount')
-        )
-        return ingredients
+        return obj.ingredients.values('id', 'name', 'measurement_unit',
+                                      amount=F('ingredientrecipe__amount'))
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
@@ -144,7 +141,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             TagRecipe.objects.create(tag=tag, recipe=recipe)
 
         return recipe
-    
+
     def update(self, instance, validated_data):
         self.custom_validate_tags()
         self.custom_validate_ingredients()

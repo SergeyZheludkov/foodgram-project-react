@@ -6,10 +6,10 @@ from django.db import IntegrityError
 from recipes.models import Ingredient
 
 # full list (more than 2000 items)
-# DIR_DATA = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / 'data'
+DIR_DATA = Path(__file__).resolve().parent.parent.parent.parent.parent.parent / 'data'
 
 # shorten list (50 items)
-DIR_DATA = Path(__file__).resolve().parent
+# DIR_DATA = Path(__file__).resolve().parent
 
 DATA = (
     ('ingredients.csv', Ingredient, ['name', 'measurement_unit']),

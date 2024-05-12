@@ -1,0 +1,712 @@
+[
+{
+  "model": "recipes.tag",
+  "pk": 1,
+  "fields": {
+    "name": "Завтрак",
+    "color": "#4dbf71",
+    "slug": "breakfast"
+  }
+},
+{
+  "model": "recipes.tag",
+  "pk": 2,
+  "fields": {
+    "name": "Обед",
+    "color": "#bf884d",
+    "slug": "lunch"
+  }
+},
+{
+  "model": "recipes.tag",
+  "pk": 3,
+  "fields": {
+    "name": "Ужин",
+    "color": "#25437d",
+    "slug": "dinner"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 1,
+  "fields": {
+    "name": "абрикосовое варенье",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 2,
+  "fields": {
+    "name": "абрикосовое пюре",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 3,
+  "fields": {
+    "name": "абрикосовый джем",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 4,
+  "fields": {
+    "name": "абрикосовый сок",
+    "measurement_unit": "стакан"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 5,
+  "fields": {
+    "name": "абрикосы",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 6,
+  "fields": {
+    "name": "абрикосы консервированные",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 7,
+  "fields": {
+    "name": "авокадо",
+    "measurement_unit": "по вкусу"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 8,
+  "fields": {
+    "name": "агава сироп",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 9,
+  "fields": {
+    "name": "агар-агар",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 10,
+  "fields": {
+    "name": "аграм",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 11,
+  "fields": {
+    "name": "аджика",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 12,
+  "fields": {
+    "name": "аджика зеленая",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 13,
+  "fields": {
+    "name": "айва",
+    "measurement_unit": "по вкусу"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 14,
+  "fields": {
+    "name": "айвовое пюре",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 15,
+  "fields": {
+    "name": "айран",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 16,
+  "fields": {
+    "name": "айсинг",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 17,
+  "fields": {
+    "name": "акула стейки",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 18,
+  "fields": {
+    "name": "алкоголь",
+    "measurement_unit": "стакан"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 19,
+  "fields": {
+    "name": "алкоголь крепкий",
+    "measurement_unit": "ст. л."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 20,
+  "fields": {
+    "name": "алыча",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 21,
+  "fields": {
+    "name": "альбухара",
+    "measurement_unit": "шт."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 22,
+  "fields": {
+    "name": "альмехи",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 23,
+  "fields": {
+    "name": "амарантовая мука",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 24,
+  "fields": {
+    "name": "ананасовый сироп",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 25,
+  "fields": {
+    "name": "ананасовый сок",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 26,
+  "fields": {
+    "name": "ананасы",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 27,
+  "fields": {
+    "name": "ананасы вяленые",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 28,
+  "fields": {
+    "name": "ананасы консервированные",
+    "measurement_unit": "по вкусу"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 29,
+  "fields": {
+    "name": "анис",
+    "measurement_unit": "по вкусу"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 30,
+  "fields": {
+    "name": "анис звездочки",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 31,
+  "fields": {
+    "name": "анисовый ликер",
+    "measurement_unit": "мл"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 32,
+  "fields": {
+    "name": "анис семена",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 33,
+  "fields": {
+    "name": "анчоусы",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 34,
+  "fields": {
+    "name": "апельсиновая вода",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 35,
+  "fields": {
+    "name": "апельсиновая цедра",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 36,
+  "fields": {
+    "name": "апельсиновая эссенция",
+    "measurement_unit": "ч. л."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 37,
+  "fields": {
+    "name": "апельсиновое варенье",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 38,
+  "fields": {
+    "name": "апельсиновые цукаты",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 39,
+  "fields": {
+    "name": "апельсиновый джем",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 40,
+  "fields": {
+    "name": "апельсиновый джем с имбирем",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 41,
+  "fields": {
+    "name": "апельсиновый ликер",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 42,
+  "fields": {
+    "name": "апельсиновый сироп",
+    "measurement_unit": "стакан"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 43,
+  "fields": {
+    "name": "апельсиновый сок",
+    "measurement_unit": "по вкусу"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 44,
+  "fields": {
+    "name": "апельсиновый сок свежевыжатый",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 45,
+  "fields": {
+    "name": "апельсиновый уксус",
+    "measurement_unit": "ст. л."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 46,
+  "fields": {
+    "name": "апельсиновый экстракт",
+    "measurement_unit": "ч. л."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 47,
+  "fields": {
+    "name": "апельсины",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 48,
+  "fields": {
+    "name": "апельсины красные",
+    "measurement_unit": "шт."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 49,
+  "fields": {
+    "name": "апельсины крупные",
+    "measurement_unit": "шт."
+  }
+},
+{
+  "model": "recipes.ingredient",
+  "pk": 50,
+  "fields": {
+    "name": "арахис",
+    "measurement_unit": "г"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 6,
+  "fields": {
+    "author": 6,
+    "image": "recipes/images/temp_0hjUfgX.png",
+    "name": "Нечто съедобное (пробовать на свой страх и риск)",
+    "text": "Приготовьте как нибудь эти ингредиеты, не забудьте посолить.",
+    "cooking_time": 12,
+    "pub_date": "2024-05-12T17:04:12.530Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 7,
+  "fields": {
+    "author": 6,
+    "image": "recipes/images/temp_SUzZThF.png",
+    "name": "Еще одна попытка приготовить еду",
+    "text": "Вероятно стоит это смешать.",
+    "cooking_time": 10,
+    "pub_date": "2024-05-12T17:04:12.905Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 8,
+  "fields": {
+    "author": 6,
+    "image": "recipes/images/temp_sOTtUZI.png",
+    "name": "Еда без дополнительной обработки",
+    "text": "Просто съесть",
+    "cooking_time": 1,
+    "pub_date": "2024-05-12T17:04:13.321Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 9,
+  "fields": {
+    "author": 6,
+    "image": "recipes/images/temp_cWSr2vV.png",
+    "name": "Нечто жареное",
+    "text": "Жарить 10 минут",
+    "cooking_time": 10,
+    "pub_date": "2024-05-12T17:04:13.605Z"
+  }
+},
+{
+  "model": "recipes.recipe",
+  "pk": 10,
+  "fields": {
+    "author": 5,
+    "image": "recipes/images/temp_ShpmqBE.png",
+    "name": "Варёное нечто",
+    "text": "Варить 20 минут",
+    "cooking_time": 25,
+    "pub_date": "2024-05-12T17:04:13.896Z"
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 8,
+  "fields": {
+    "ingredient": 1,
+    "recipe": 6,
+    "amount": 10
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 9,
+  "fields": {
+    "ingredient": 2,
+    "recipe": 6,
+    "amount": 20
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 10,
+  "fields": {
+    "ingredient": 1,
+    "recipe": 7,
+    "amount": 10
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 11,
+  "fields": {
+    "ingredient": 2,
+    "recipe": 7,
+    "amount": 20
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 12,
+  "fields": {
+    "ingredient": 1,
+    "recipe": 8,
+    "amount": 10
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 13,
+  "fields": {
+    "ingredient": 2,
+    "recipe": 9,
+    "amount": 20
+  }
+},
+{
+  "model": "recipes.ingredientrecipe",
+  "pk": 14,
+  "fields": {
+    "ingredient": 2,
+    "recipe": 10,
+    "amount": 20
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 8,
+  "fields": {
+    "tag": 1,
+    "recipe": 6
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 9,
+  "fields": {
+    "tag": 2,
+    "recipe": 6
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 10,
+  "fields": {
+    "tag": 1,
+    "recipe": 7
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 11,
+  "fields": {
+    "tag": 2,
+    "recipe": 7
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 12,
+  "fields": {
+    "tag": 3,
+    "recipe": 8
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 13,
+  "fields": {
+    "tag": 1,
+    "recipe": 9
+  }
+},
+{
+  "model": "recipes.tagrecipe",
+  "pk": 14,
+  "fields": {
+    "tag": 2,
+    "recipe": 10
+  }
+},
+{
+  "model": "recipes.favorite",
+  "pk": 4,
+  "fields": {
+    "user": 5,
+    "recipe": 6
+  }
+},
+{
+  "model": "recipes.shoppingcart",
+  "pk": 2,
+  "fields": {
+    "user": 5,
+    "recipe": 6
+  }
+},
+{
+  "model": "users.myuser",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$260000$3NHyruWZyB6kMzNkRNfXfL$pyvPZiPTs9NR6CdielQ7MZpVrmfmbD9DbS91TUZEFns=",
+    "last_login": "2024-05-12T14:46:10Z",
+    "is_superuser": true,
+    "username": "admin",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2024-05-12T14:45:14Z",
+    "first_name": "Сергей",
+    "last_name": "Желудков",
+    "email": "zhsv2@yandex.ru",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.myuser",
+  "pk": 5,
+  "fields": {
+    "password": "MySecretPas$word",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "vasya.pupkin",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2024-05-12T17:04:06.314Z",
+    "first_name": "Вася",
+    "last_name": "Пупкин",
+    "email": "vpupkin@yandex.ru",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.myuser",
+  "pk": 6,
+  "fields": {
+    "password": "MySecretPas$word",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "second-user",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2024-05-12T17:04:06.606Z",
+    "first_name": "Андрей",
+    "last_name": "Макаревский",
+    "email": "second_user@email.org",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.myuser",
+  "pk": 7,
+  "fields": {
+    "password": "MySecretPas$word",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "third-user-username",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2024-05-12T17:04:06.858Z",
+    "first_name": "Гордон",
+    "last_name": "Рамзиков",
+    "email": "third-user@user.ru",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.follow",
+  "pk": 3,
+  "fields": {
+    "user": 5,
+    "following": 7
+  }
+},
+{
+  "model": "users.follow",
+  "pk": 4,
+  "fields": {
+    "user": 5,
+    "following": 6
+  }
+}
+]
