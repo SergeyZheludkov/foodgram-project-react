@@ -4,6 +4,7 @@ from os.path import join
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Count, F
 from django.http import Http404, FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
@@ -19,7 +20,8 @@ from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
     CustomAuthTokenSerializer, TagSerializer, IngredientSerializer,
-    RecipeSerializer, RecipeShoppingCartSerializer, UserSubscribeSerializer
+    RecipeCreateIngredientSerializer, RecipeSerializer,
+    RecipeShoppingCartSerializer, UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -51,6 +53,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = self.queryset_filter(queryset, ShoppingCart,
                                         is_in_shopping_cart)
 
+        queryset = queryset.annotate(
+            is_favorited=Count(F('recipe_in_favorite')),
+            is_in_shopping_cart=Count(F('recipe_in_cart')),
+        )
         return queryset
 
     def queryset_filter(self, queryset, model, param):

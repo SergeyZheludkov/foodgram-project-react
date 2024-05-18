@@ -9,8 +9,9 @@ class MyUser(AbstractUser):
 
     first_name = models.CharField('Имя', max_length=MAX_FIELD_LENGTH)
     last_name = models.CharField('Фамилия', max_length=MAX_FIELD_LENGTH)
-    email = models.EmailField('Почта', unique=True)
+
     # по умолчанию для EmailField max_length=254
+    email = models.EmailField('Почта', unique=True)
 
 
 class Follow(models.Model):
@@ -26,6 +27,21 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'подписчик'
         verbose_name_plural = 'Подписчики'
+
+        # Выбрасывают ошибку 500 "UNIQUE/CHECK constraint failed...",
+        # что не соответствует ТЗ - должны быть исключения со статусом 400
+        # (реализовано во ViewSet)
+        # Поэтому здесь ограничения продублированы для страховки и отладки.
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'following'),
+                name='unique_user_following'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name='can_not_follow_youself'
+            )
+        ]
 
     def __str__(self):
         return self.user.username

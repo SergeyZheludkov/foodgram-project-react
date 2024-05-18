@@ -78,6 +78,7 @@ class IngredientRecipe(models.Model):
                 name='unique_key_recipe_ingredient'
             )
         ]
+        default_related_name = 'ingredient_recipe'
 
     def __str__(self):
         return f'{self.ingredient} - {self.recipe}'
