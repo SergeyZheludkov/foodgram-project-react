@@ -32,56 +32,51 @@ User = get_user_model()
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
-    def perform_create(self, serializer):
-        """Переопределение единичной операции сохранения объекта модели."""
-        serializer.save(author=self.request.user)
-
     def get_queryset(self):
-        queryset = Recipe.objects.all()
+        queryset = Recipe.objects.prefetch_related('carts', 'favorites')
+        user = self.request.user
 
         is_favorited = self.request.query_params.get('is_favorited')
-        queryset = self.queryset_filter(queryset, Favorite, is_favorited)
+        if is_favorited is not None and not user.is_anonymous:
+            is_favorited = self.transform_to_int_filter_param(
+                'is_favorite', is_favorited
+            )
+            if is_favorited == 1:
+                queryset = queryset.filter(favorites__user=user)
 
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart')
-        queryset = self.queryset_filter(queryset, ShoppingCart,
-                                        is_in_shopping_cart)
-
-        queryset = queryset.annotate(
-            is_favorited=Count(F('recipe_in_favorite')),
-            is_in_shopping_cart=Count(F('recipe_in_cart')),
+        is_in_cart = self.request.query_params.get(
+            'is_in_shopping_cart'
         )
-        return queryset
+        if is_in_cart is not None and not user.is_anonymous:
+            is_in_cart = self.transform_to_int_filter_param(
+                'is_in_shopping_cart', is_in_cart
+            )
+            if is_in_cart == 1:
+                queryset = queryset.filter(carts__user=user)
 
-    def queryset_filter(self, queryset, model, param):
-        """Фильтрация по параметрам, которых нет в модели Recipe."""
-        if param is not None:
-            param = int(param)
-            objs = model.objects.all()
-            recipe_ids = []
-            for obj in objs:
-                if obj.user == self.request.user:
-                    recipe_ids.append(obj.recipe.id)
-            if param == 1:
-                queryset = queryset.filter(id__in=recipe_ids)
-            elif param == 0:
-                queryset = queryset.exclude(id__in=recipe_ids)
+        return queryset.annotate(is_favorited=Count(F('favorites')),
+                                 is_in_shopping_cart=Count(F('carts')))
 
-        return queryset
+    def transform_to_int_filter_param(self, param_name, param_value):
+
+        try:
+            param_value = int(param_value)
+        except ValueError:
+            raise ValueError(f'Значение {param_name} должно быть 0 или 1!')
+        return param_value
 
     def get_serializer_class(self):
-        if self.action in ('to_shopping_cart_add_delete',
-                           'to_favorite_add_delete'):
+        if self.action in {'to_shopping_cart_add_delete',
+                           'to_favorite_add_delete'}:
             return RecipeShoppingCartSerializer
         return RecipeSerializer
 
-    @action(['post', 'delete'], url_path='shopping_cart', detail=True,
+    @action(('post', 'delete'), url_path='shopping_cart', detail=True,
             permission_classes=(IsAuthenticated,))
     def to_shopping_cart_add_delete(self, request, pk):
         """Добавление в список покупок и исключение."""
@@ -91,6 +86,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def shopping_cart_download(self, request):
         """Формирование списка покупок."""
+        # x = get_object_or_404(User, pk=request.user.id).carts.all()
         shopping_carts = ShoppingCart.objects.filter(user=request.user)
         recipe_list = []
         for shopping_cart in shopping_carts:
@@ -99,7 +95,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe__in=recipe_list
         )
 
-        # заполнение словаря: ингридиент-количество
+        # заполнение словаря: ингредиент-количество
         shopping_cart = {}
         for item in ingredients_recipes:
             name = item.ingredient.name
@@ -126,7 +122,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return response
 
-    @action(['post', 'delete'], url_path='favorite', detail=True,
+    @action(('post', 'delete'), url_path='favorite', detail=True,
             permission_classes=(IsAuthenticated,))
     def to_favorite_add_delete(self, request, pk):
         """Добавление в избранное и исключение."""
@@ -200,7 +196,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
-    @action(['post'], url_path='set_password', detail=False,
+    @action(('post',), url_path='set_password', detail=False,
             permission_classes=(IsAuthenticated, ))
     def reset_password(self, request):
         """Замена пароля."""
@@ -212,7 +208,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         self.request.user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(['post', 'delete'], url_path='subscribe', detail=True,
+    @action(('post', 'delete'), url_path='subscribe', detail=True,
             permission_classes=(IsAuthenticated, ))
     def subscription_create_delete(self, request, pk):
         """Добавление и удаление подписки."""

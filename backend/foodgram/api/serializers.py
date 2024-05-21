@@ -58,7 +58,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class UserSubscribeSerializer(CustomUserSerializer):
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(source='author.count',
+    recipes_count = serializers.IntegerField(source='recipes.count',
                                              read_only=True)
 
     class Meta(CustomUserSerializer.Meta):
@@ -69,7 +69,7 @@ class UserSubscribeSerializer(CustomUserSerializer):
         recipes_limit = self.context.get('rec_limit')
         if recipes_limit:
             recipes_limit = self.validate_recipes_limit(recipes_limit)
-        return user.author.values(
+        return user.recipes.values(
             'id', 'image', 'name', 'cooking_time'
         )[:recipes_limit]
 
@@ -114,10 +114,13 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Валидация и привязка tags и ingredients к recipe в ручном режиме."""
+
         self.validate_tags()
         self.validate_ingredients()
 
-        recipe = super().create(validated_data)
+        recipe = Recipe.objects.create(
+            **validated_data, author=self.context.get('request').user
+        )
 
         ingredients = self.initial_data.get('ingredients')
 
@@ -154,7 +157,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def validate_tags(self):
-        if self.initial_data['tags'] == []:
+        if 'tags' not in self.initial_data or self.initial_data['tags'] == []:
             raise serializers.ValidationError('Нет данных о тэге')
 
         tags_id = self.initial_data['tags']
