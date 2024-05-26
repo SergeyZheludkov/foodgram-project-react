@@ -1,12 +1,13 @@
 import base64
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
 from django.core.files.base import ContentFile
 from django.db.models import F
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-from django.http import Http404
 
 from recipes.models import (Ingredient, Recipe, Tag,
                             TagRecipe, IngredientRecipe)
@@ -66,12 +67,13 @@ class UserSubscribeSerializer(CustomUserSerializer):
                   'is_subscribed', 'recipes_count', 'recipes')
 
     def get_recipes(self, user):
-        recipes_limit = self.context.get('rec_limit')
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get('recipes_limit')
+
         if recipes_limit:
             recipes_limit = self.validate_recipes_limit(recipes_limit)
-        return user.recipes.values(
-            'id', 'image', 'name', 'cooking_time'
-        )[:recipes_limit]
+        return user.recipes.values('id', 'image', 'name',
+                                   'cooking_time')[:recipes_limit]
 
     def validate_recipes_limit(self, recipe_limit):
         try:
@@ -96,7 +98,7 @@ class Base64ImageField(serializers.ImageField):
 class RecipeSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True, many=False)
     ingredients = serializers.SerializerMethodField()
-    tags = TagSerializer(read_only=True, many=True, allow_empty=False)
+    tags = TagSerializer(read_only=True, many=True)
     image = Base64ImageField()
     is_favorited = serializers.BooleanField(read_only=True, default=False)
     is_in_shopping_cart = serializers.BooleanField(read_only=True,
@@ -114,16 +116,56 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Валидация и привязка tags и ingredients к recipe в ручном режиме."""
-
-        self.validate_tags()
-        self.validate_ingredients()
+        ingredients = self.validate_ingredients()
+        tags_id = self.validate_tags()
 
         recipe = Recipe.objects.create(
             **validated_data, author=self.context.get('request').user
         )
+        self.ingredient_recipe_bulk_create(recipe, ingredients)
+        self.tag_recipe_bulk_create(recipe, tags_id)
 
+        return recipe
+
+    def update(self, recipe, validated_data):
+        """Обновление рецепта, с учетом обновлений в связанных таблицах."""
+        ingredients = self.validate_ingredients()
+        recipe.ingredient_recipe.all().delete()
+        self.ingredient_recipe_bulk_create(recipe, ingredients)
+
+        tags_id = self.validate_tags()
+        recipe.tag_recipe.all().delete()
+        self.tag_recipe_bulk_create(recipe, tags_id)
+
+        return super().update(recipe, validated_data)
+
+    def validate_ingredients(self):
         ingredients = self.initial_data.get('ingredients')
 
+        if ingredients is None or ingredients == []:
+            raise serializers.ValidationError('Нет данных об ингредиентах')
+
+        ingredient_ids = []
+        for ingredient in ingredients:
+            ingredient_ids.append(ingredient['id'])
+            if ingredient['amount'] < 1:
+                raise serializers.ValidationError(
+                    'Количество ингредиента должно быть не меньше 1')
+
+        ingredient_ids_quantity = len(ingredient_ids)
+
+        if len(set(ingredient_ids)) < ingredient_ids_quantity:
+            raise serializers.ValidationError('Ингредиенты повторяются!')
+
+        ingredients_in_db = Ingredient.objects.in_bulk(id_list=ingredient_ids,
+                                                       field_name='pk')
+        if len(ingredients_in_db) < ingredient_ids_quantity:
+            raise serializers.ValidationError('Проверьте id ингредиентов!')
+
+        return ingredients
+
+    def ingredient_recipe_bulk_create(self, recipe, ingredients):
+        """Создание записей в таблице IngredientRecipe."""
         IngredientRecipe.objects.bulk_create(
             [
                 IngredientRecipe(
@@ -137,8 +179,23 @@ class RecipeSerializer(serializers.ModelSerializer):
             ]
         )
 
+    def validate_tags(self):
         tags_id = self.initial_data.get('tags')
 
+        if tags_id is None or tags_id == []:
+            raise serializers.ValidationError('Нет данных о тэге')
+
+        if len(tags_id) != len(set(tags_id)):
+            raise serializers.ValidationError('Тэги повторяются!')
+
+        for tag_id in tags_id:
+            if not Tag.objects.filter(id=tag_id).exists():
+                raise serializers.ValidationError('Проверьте id тэгов!')
+
+        return tags_id
+
+    def tag_recipe_bulk_create(self, recipe, tags_id):
+        """Создание записей в таблице TagRecipe."""
         TagRecipe.objects.bulk_create(
             [
                 TagRecipe(
@@ -149,67 +206,29 @@ class RecipeSerializer(serializers.ModelSerializer):
             ]
         )
 
-        return recipe
 
-    def update(self, instance, validated_data):
-        self.validate_tags()
-        self.validate_ingredients()
-        return super().update(instance, validated_data)
+# class RecipeCreateIngredientSerializer(serializers.ModelSerializer):
+#     id = serializers.PrimaryKeyRelatedField(
+#         source='ingredient', queryset=Ingredient.objects.all()
+#     )
 
-    def validate_tags(self):
-        if 'tags' not in self.initial_data or self.initial_data['tags'] == []:
-            raise serializers.ValidationError('Нет данных о тэге')
-
-        tags_id = self.initial_data['tags']
-
-        if len(tags_id) != len(set(tags_id)):
-            raise serializers.ValidationError('Тэги повторяются!')
-
-        for tag_id in tags_id:
-            if not Tag.objects.filter(id=tag_id).exists():
-                raise serializers.ValidationError('Проверьте id тэгов!')
-
-    def validate_ingredients(self):
-        if 'ingredients' not in self.initial_data or (
-            self.initial_data['ingredients'] == []
-        ):
-            raise serializers.ValidationError('Нет данных об ингредиентах')
-
-        ingredients = self.initial_data['ingredients']
-
-        ingredient_ids = []
-
-        for ingredient in ingredients:
-            if not Ingredient.objects.filter(id=ingredient['id']).exists():
-                raise serializers.ValidationError('Проверьте id ингредиентов!')
-            ingredient_ids.append(ingredient['id'])
-            if ingredient['amount'] < 1:
-                raise serializers.ValidationError(
-                    'Количество ингредиента должно быть не меньше 1')
-
-        if len(ingredient_ids) != len(set(ingredient_ids)):
-            raise serializers.ValidationError('Ингредиенты повторяются!')
+#     class Meta:
+#         model = IngredientRecipe
+#         fields = '__all__'
 
 
-class RecipeCreateIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(
-        source='ingredient', queryset=Ingredient.objects.all()
-    )
-
-    class Meta:
-        model = IngredientRecipe
-        fields = '__all__'
-
-
-class RecipeShoppingCartSerializer(RecipeSerializer):
+class ShoppingCartFavoriteSerializer(RecipeSerializer):
 
     class Meta(RecipeSerializer.Meta):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
+    def create(self, model, recipe, user):
+        return model.objects.create(user=user, recipe=recipe)
+
 
 class CustomAuthTokenSerializer(serializers.Serializer):
-    """Изменение пары авторизации с username-password на email-password."""
+    """Сериализатор запроса токена."""
 
     email = serializers.CharField(label='Email', write_only=True)
     password = serializers.CharField(
@@ -224,13 +243,16 @@ class CustomAuthTokenSerializer(serializers.Serializer):
 
         if email and password:
             try:
-                user = get_object_or_404(User, email=email, password=password)
-            except Http404:
-                msg = 'Unable to log in with provided credentials.'
-                raise serializers.ValidationError(msg, code='authorization')
+                user = get_object_or_404(User, email=email)
+            except Http404 as exc:
+                raise serializers.ValidationError(
+                    'Невозможно залогиниться по полученным данным.') from exc
         else:
-            msg = 'Must include "email" and "password".'
-            raise serializers.ValidationError(msg, code='authorization')
+            raise serializers.ValidationError(
+                'Запрос должен включать "email" и "password".')
+
+        if not check_password(password, user.password):
+            raise serializers.ValidationError('Неверный пароль!')
 
         data['user'] = user
         return data

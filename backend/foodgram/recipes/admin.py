@@ -6,7 +6,7 @@ from .models import (Favorite, Ingredient, Recipe, ShoppingCart, Tag)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
     list_filter = ('name',)
-    search_fields = ('name',)
+    search_fields = ('^name',)
 
 
 class RecipeAdmin(admin.ModelAdmin):

@@ -4,24 +4,25 @@ from os.path import join
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Count, F
+from django.contrib.auth.hashers import check_password, make_password
+from django.db.models import Count, F, Sum
 from django.http import Http404, FileResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .filters import RecipeFilter
+from .filters import RecipeFilter, IngredientFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
     CustomAuthTokenSerializer, TagSerializer, IngredientSerializer,
-    RecipeCreateIngredientSerializer, RecipeSerializer,
-    RecipeShoppingCartSerializer, UserSubscribeSerializer
+    RecipeSerializer, ShoppingCartFavoriteSerializer, UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -73,7 +74,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in {'to_shopping_cart_add_delete',
                            'to_favorite_add_delete'}:
-            return RecipeShoppingCartSerializer
+            return ShoppingCartFavoriteSerializer
         return RecipeSerializer
 
     @action(('post', 'delete'), url_path='shopping_cart', detail=True,
@@ -86,25 +87,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def shopping_cart_download(self, request):
         """Формирование списка покупок."""
-        # x = get_object_or_404(User, pk=request.user.id).carts.all()
-        shopping_carts = ShoppingCart.objects.filter(user=request.user)
-        recipe_list = []
-        for shopping_cart in shopping_carts:
-            recipe_list.append(shopping_cart.recipe)
+        user = get_object_or_404(User, pk=request.user.id)
+        shopping_carts = user.carts.all()
+        recipe_list = [
+            shopping_cart.recipe
+            for shopping_cart in shopping_carts
+        ]
         ingredients_recipes = IngredientRecipe.objects.filter(
             recipe__in=recipe_list
         )
 
         # заполнение словаря: ингредиент-количество
-        shopping_cart = {}
-        for item in ingredients_recipes:
-            name = item.ingredient.name
-            amount = item.amount
-            if name in shopping_cart.keys():
-                # суммирование количества одинаковых ингридиентов
-                shopping_cart[name] += amount
-            else:
-                shopping_cart[name] = amount
+        shopping_cart = ingredients_recipes.values(
+            'ingredient__name'
+        ).annotate(
+            amount=Sum('amount')
+        )
 
         path = join(settings.MEDIA_ROOT, 'shopping_cart', 'list.csv')
         cart = open(path, "w+", newline='', encoding='utf-8')
@@ -114,8 +112,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         csv_writer.writerow(('Ингредиент', 'Количество'))
 
         # заполнение файла данными
-        for ingredient, amount in shopping_cart.items():
-            csv_writer.writerow((ingredient, amount))
+        for ingredient in shopping_cart:
+            csv_writer.writerow((ingredient['ingredient__name'],
+                                 ingredient['amount']))
 
         response = FileResponse(cart, content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=list.csv'
@@ -130,27 +129,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def shopping_cart_favorite_actions(self, request, pk, model):
 
+        try:
+            recipe = self.get_object()
+        # согласно спецификации запросов Postman,
+        # здесь должен быть ответ 404 для delete и 400 для create
+        except Http404 as exc:
+            msg = 'Рецепта с таким номером нет!'
+            if request.method == 'DELETE':
+                raise NotFound(msg) from exc
+            raise ParseError(msg) from exc
+
         if request.method == 'DELETE':
-            recipe = get_object_or_404(Recipe, pk=pk)
-            obj = model.objects.filter(user=request.user, recipe=recipe)
-            if not obj.exists():
-                return Response('Рецепт не отмечен!',
-                                status=status.HTTP_400_BAD_REQUEST)
-            obj.delete()
+            deletion = model.objects.filter(user=request.user,
+                                            recipe=recipe).delete()
+            # проверяем количество удаленных объектов
+            if deletion[0] == 0:
+                raise ParseError('Рецепт не отмечен!')
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        try:
-            recipe = get_object_or_404(Recipe, pk=pk)
-        except Http404:
-            return Response('Рецепт с таким номером не найден!',
-                            status=status.HTTP_400_BAD_REQUEST)
-
         if model.objects.filter(user=request.user, recipe=recipe).exists():
-            return Response('Рецепт уже отмечен!',
-                            status=status.HTTP_400_BAD_REQUEST)
+            raise ParseError('Рецепт уже отмечен!')
 
-        model.objects.create(user=request.user, recipe=recipe)
         serializer = self.get_serializer(recipe)
+        serializer.create(model, recipe, user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -158,9 +159,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('name',)
-    search_fields = ('^name',)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -175,52 +175,53 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
-        serializer.save(password=self.request.data.get('password'))
+        password = self.request.data.get('password')
+        # шифрование пароля
+        password = make_password(password)
+        serializer.save(password=password)
 
     def get_serializer_class(self):
         if self.action == 'create':
             return CustomUserCreateSerializer
-        elif self.action in ('subscription_create_delete', "subscriptions"):
+        if self.action in {'subscription_create_delete', 'subscriptions'}:
             return UserSubscribeSerializer
         return CustomUserSerializer
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['rec_limit'] = self.request.query_params.get('recipes_limit')
-        return context
-
     @action(url_path='me', detail=False,
-            permission_classes=(IsAuthenticated, ))
+            permission_classes=(IsAuthenticated,))
     def get_self(self, request):
         """Получение данных о самом пользователе."""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
     @action(('post',), url_path='set_password', detail=False,
-            permission_classes=(IsAuthenticated, ))
+            permission_classes=(IsAuthenticated,))
     def reset_password(self, request):
         """Замена пароля."""
-        if request.data['current_password'] != request.user.password:
+        password = request.data.get('current_password')
+        if not check_password(password, request.user.password):
             return Response('Неверный текущий пароль!',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        self.request.user.password = request.data['new_password']
+        new_password = make_password(request.data.get('new_password'))
+        self.request.user.password = new_password
         self.request.user.save()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(('post', 'delete'), url_path='subscribe', detail=True,
-            permission_classes=(IsAuthenticated, ))
+            permission_classes=(IsAuthenticated,))
     def subscription_create_delete(self, request, pk):
         """Добавление и удаление подписки."""
-        following = get_object_or_404(User, pk=pk)
+        following = self.get_object()
 
         if request.method == 'DELETE':
-            follow_obj = Follow.objects.filter(user=request.user,
-                                               following=following)
-            if not follow_obj.exists():
+            deletion = following.following.filter(
+                user_id=request.user.pk
+            ).delete()
+            if deletion[0] == 0:
                 return Response('Такой подписки нет!',
                                 status=status.HTTP_400_BAD_REQUEST)
-            follow_obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         if following == request.user:
@@ -238,17 +239,14 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(url_path='subscriptions', detail=False,
-            permission_classes=(IsAuthenticated, ))
+            permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         """Список подписок пользователя."""
-        subscriptions = Follow.objects.filter(user=self.request.user)
-
-        following_list = []
-        for subscription in subscriptions:
-            following_list.append(subscription.following.username)
-
-        subscribed_on = User.objects.filter(username__in=following_list)
+        user = self.request.user
+        following_list = user.subscriber.all().values_list('following')
+        subscribed_on = User.objects.filter(pk__in=following_list)
         subscribed_on = self.paginate_queryset(subscribed_on)
+
         serializer = self.get_serializer(subscribed_on, many=True)
         return self.get_paginated_response(serializer.data)
 
@@ -261,5 +259,5 @@ class CustomObtainAuthToken(ObtainAuthToken):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
+        token, _ = Token.objects.get_or_create(user=user)
         return Response({'auth_token': token.key})

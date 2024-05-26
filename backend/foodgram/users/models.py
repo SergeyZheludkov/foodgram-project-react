@@ -13,6 +13,9 @@ class MyUser(AbstractUser):
     # по умолчанию для EmailField max_length=254
     email = models.EmailField('Почта', unique=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
 
 class Follow(models.Model):
     """Модель подписчиков."""
