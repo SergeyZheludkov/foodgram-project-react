@@ -3,6 +3,10 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 AUTH_USER_MODEL = 'users.MyUser'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -10,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v_paaogslf_+%6^-y93*v5slx1d-&i$ybxx)l447qlm*u_!4s4'
+SECRET_KEY = os.getenv('SECRET_KEY', 'test_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

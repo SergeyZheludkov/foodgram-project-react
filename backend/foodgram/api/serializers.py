@@ -8,9 +8,11 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import (Ingredient, Recipe, Tag,
-                            TagRecipe, IngredientRecipe)
+from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart,
+                            Tag, TagRecipe, IngredientRecipe)
 
 User = get_user_model()
 
@@ -93,6 +95,19 @@ class Base64ImageField(serializers.ImageField):
             ext = format.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
         return super().to_internal_value(data)
+
+
+# class TagFieldInRecipe(serializers.Field):
+#     def get_attribute(self, recipe):
+#         return recipe
+
+#     def to_representation(self, recipe):
+#         tags_list = recipe.tag_recipe.all().values_list('tag')
+#         tags_obj = Tag.objects.filter(pk__in=tags_list)
+#         return TagSerializer(tags_obj, many=True).data
+
+#     def to_internal_value(self, tags_list):
+#         return tags_list
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -180,6 +195,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate_tags(self):
+
         tags_id = self.initial_data.get('tags')
 
         if tags_id is None or tags_id == []:
@@ -207,24 +223,50 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
 
-# class RecipeCreateIngredientSerializer(serializers.ModelSerializer):
-#     id = serializers.PrimaryKeyRelatedField(
-#         source='ingredient', queryset=Ingredient.objects.all()
-#     )
-
-#     class Meta:
-#         model = IngredientRecipe
-#         fields = '__all__'
-
-
-class ShoppingCartFavoriteSerializer(RecipeSerializer):
+class RecipeShortenInfoSerializer(RecipeSerializer):
+    """Сериализатор вывода сокращенной информации о рецепте."""
 
     class Meta(RecipeSerializer.Meta):
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
-    def create(self, model, recipe, user):
-        return model.objects.create(user=user, recipe=recipe)
+
+class FavoriteShoppingCartAddSerializer(serializers.ModelSerializer):
+    """Общее в сериализаторах для добавления в избранное и в список покупок."""
+
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    recipe = serializers.PrimaryKeyRelatedField(queryset=Recipe.objects.all())
+
+    class Meta:
+        fields = ('user', 'recipe')
+
+
+class FavoriteAddSerializer(FavoriteShoppingCartAddSerializer):
+    """Сериализатор для добавления в избранное."""
+
+    class Meta(FavoriteShoppingCartAddSerializer.Meta):
+        model = Favorite
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже отмечен!'
+            )
+        ]
+
+
+class ShoppingCartAddSerializer(FavoriteShoppingCartAddSerializer):
+    """Сериализатор для добавления в список покупок."""
+
+    class Meta(FavoriteShoppingCartAddSerializer.Meta):
+        model = ShoppingCart
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShoppingCart.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже отмечен!'
+            )
+        ]
 
 
 class CustomAuthTokenSerializer(serializers.Serializer):

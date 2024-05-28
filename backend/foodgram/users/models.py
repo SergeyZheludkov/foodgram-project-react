@@ -30,11 +30,6 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'подписчик'
         verbose_name_plural = 'Подписчики'
-
-        # Выбрасывают ошибку 500 "UNIQUE/CHECK constraint failed...",
-        # что не соответствует ТЗ - должны быть исключения со статусом 400
-        # (реализовано во ViewSet)
-        # Поэтому здесь ограничения продублированы для страховки и отладки.
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'following'),

@@ -1,4 +1,5 @@
 import csv
+import io
 from os.path import join
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -14,6 +15,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -21,8 +23,9 @@ from .filters import RecipeFilter, IngredientFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
-    CustomAuthTokenSerializer, TagSerializer, IngredientSerializer,
-    RecipeSerializer, ShoppingCartFavoriteSerializer, UserSubscribeSerializer
+    CustomAuthTokenSerializer, FavoriteAddSerializer,
+    ShoppingCartAddSerializer, TagSerializer, IngredientSerializer,
+    RecipeSerializer, RecipeShortenInfoSerializer, UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -72,9 +75,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return param_value
 
     def get_serializer_class(self):
+        print('self.action = ', self.action)
         if self.action in {'to_shopping_cart_add_delete',
                            'to_favorite_add_delete'}:
-            return ShoppingCartFavoriteSerializer
+            return RecipeShortenInfoSerializer
         return RecipeSerializer
 
     @action(('post', 'delete'), url_path='shopping_cart', detail=True,
@@ -129,17 +133,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def shopping_cart_favorite_actions(self, request, pk, model):
 
-        try:
-            recipe = self.get_object()
-        # согласно спецификации запросов Postman,
-        # здесь должен быть ответ 404 для delete и 400 для create
-        except Http404 as exc:
-            msg = 'Рецепта с таким номером нет!'
-            if request.method == 'DELETE':
-                raise NotFound(msg) from exc
-            raise ParseError(msg) from exc
-
         if request.method == 'DELETE':
+            recipe = self.get_object()
             deletion = model.objects.filter(user=request.user,
                                             recipe=recipe).delete()
             # проверяем количество удаленных объектов
@@ -147,12 +142,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 raise ParseError('Рецепт не отмечен!')
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if model.objects.filter(user=request.user, recipe=recipe).exists():
-            raise ParseError('Рецепт уже отмечен!')
+        data = {'user': self.request.user.pk, 'recipe': pk}
+        if model == Favorite:
+            serializer = FavoriteAddSerializer(data=data)
+        else:
+            serializer = ShoppingCartAddSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        serializer = self.get_serializer(recipe)
-        serializer.create(model, recipe, user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer_for_output = self.get_serializer(self.get_object())
+        return Response(serializer_for_output.data,
+                        status=status.HTTP_201_CREATED)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
