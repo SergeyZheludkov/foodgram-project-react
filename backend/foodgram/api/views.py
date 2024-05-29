@@ -1,5 +1,4 @@
 import csv
-import io
 from os.path import join
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -7,15 +6,14 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, F, Sum
-from django.http import Http404, FileResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.exceptions import ParseError
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -25,7 +23,8 @@ from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
     CustomAuthTokenSerializer, FavoriteAddSerializer,
     ShoppingCartAddSerializer, TagSerializer, IngredientSerializer,
-    RecipeSerializer, RecipeShortenInfoSerializer, UserSubscribeSerializer
+    RecipeReadSerializer, RecipeCreateUpdateSerializer,
+    RecipeShortenInfoSerializer, UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -36,7 +35,6 @@ User = get_user_model()
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -67,7 +65,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                                  is_in_shopping_cart=Count(F('carts')))
 
     def transform_to_int_filter_param(self, param_name, param_value):
-
         try:
             param_value = int(param_value)
         except ValueError:
@@ -75,11 +72,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return param_value
 
     def get_serializer_class(self):
-        print('self.action = ', self.action)
+        if self.action in {'create', 'partial_update'}:
+            return RecipeCreateUpdateSerializer
         if self.action in {'to_shopping_cart_add_delete',
                            'to_favorite_add_delete'}:
             return RecipeShortenInfoSerializer
-        return RecipeSerializer
+        return RecipeReadSerializer
 
     @action(('post', 'delete'), url_path='shopping_cart', detail=True,
             permission_classes=(IsAuthenticated,))
