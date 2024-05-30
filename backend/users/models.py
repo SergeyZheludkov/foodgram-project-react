@@ -14,7 +14,7 @@ class MyUser(AbstractUser):
     email = models.EmailField('Почта', unique=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ('username',)
 
 
 class Follow(models.Model):
