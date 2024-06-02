@@ -8,8 +8,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
-from rest_framework.exceptions import NotFound, ParseError
-from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
+from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart,
                             Tag, TagRecipe, IngredientRecipe)
@@ -167,7 +166,6 @@ class RecipeCreateUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, recipe, validated_data):
         """Обновление рецепта, с учетом обновлений в связанных таблицах."""
-
         try:
             ingredients = validated_data.pop('ingredients')
         except KeyError:

@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .filters import RecipeFilter, IngredientFilter
+from .paginator import RecipePagination
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
     CustomUserSerializer, CustomUserCreateSerializer,
@@ -38,6 +39,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = RecipePagination
+    ordering = ('-pub_date',)
 
     def get_queryset(self):
         queryset = Recipe.objects.prefetch_related('carts', 'favorites')
@@ -118,7 +121,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             csv_writer.writerow((ingredient['ingredient__name'],
                                  ingredient['amount']))
 
-        response = FileResponse(cart, content_type='application/vnd.ms-excel')
+        # response = FileResponse(cart,
+        # content_type='application/vnd.ms-excel')
+        response = FileResponse(cart, content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=list.csv'
 
         return response

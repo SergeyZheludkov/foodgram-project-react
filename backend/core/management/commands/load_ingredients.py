@@ -19,7 +19,6 @@ class Command(BaseCommand):
             file_data = open(f'{DIR_DATA}/{filename}', encoding='utf-8')
         except FileNotFoundError:
             self.stdout.write(f'Файл {filename} невозможно открыть')
-            return None
 
         reader = csv.reader(file_data)
         for row in reader:
@@ -32,7 +31,6 @@ class Command(BaseCommand):
                 self.stdout.write(
                     f'Файл {filename} не корректные данные: {object_value}'
                     f'для {model.__name__}')
-                return None
 
         self.stdout.write(f'Файл {filename} загружен')
 
