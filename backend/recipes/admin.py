@@ -10,10 +10,18 @@ class IngredientAdmin(admin.ModelAdmin):
     search_fields = ('^name',)
 
 
+class IngredientInline(admin.TabularInline):
+
+    model = Recipe.ingredients.through
+    verbose_name = u"Ингредиент"
+    verbose_name_plural = u"Ингредиенты"
+
+
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'in_favorite_count')
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author__email', 'tags__slug', 'tags__name')
+    inlines = (IngredientInline,)
 
     def in_favorite_count(self, recipe):
         return Favorite.objects.filter(recipe=recipe).count()

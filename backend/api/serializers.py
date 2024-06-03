@@ -76,8 +76,11 @@ class UserSubscribeSerializer(CustomUserSerializer):
 
         if recipes_limit:
             recipes_limit = self.validate_recipes_limit(recipes_limit)
-        return user.recipes.values('id', 'image', 'name',
-                                   'cooking_time')[:recipes_limit]
+        recipes = user.recipes.all()[:recipes_limit]
+        serializer = RecipeShortenInfoSerializer(recipes, many=True)
+        return serializer.data
+
+
 
     def validate_recipes_limit(self, recipe_limit):
         try:
