@@ -80,8 +80,6 @@ class UserSubscribeSerializer(CustomUserSerializer):
         serializer = RecipeShortenInfoSerializer(recipes, many=True)
         return serializer.data
 
-
-
     def validate_recipes_limit(self, recipe_limit):
         try:
             recipe_limit = int(recipe_limit)
