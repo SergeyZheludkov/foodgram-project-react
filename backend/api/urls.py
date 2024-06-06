@@ -5,19 +5,19 @@ from djoser.views import TokenDestroyView
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    CustomUserViewSet, CustomObtainAuthToken, TagViewSet, IngredientViewSet,
-    RecipeViewSet
+    APIUserViewSet, APIObtainAuthToken, TagViewSet,
+    IngredientViewSet, RecipeViewSet
 )
 
 router = DefaultRouter()
-router.register('users', CustomUserViewSet, basename='users')
+router.register('users', APIUserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
 router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('auth/token/login/', CustomObtainAuthToken.as_view()),
+    path('auth/token/login/', APIObtainAuthToken.as_view()),
     path('auth/token/logout/', TokenDestroyView.as_view()),
 ]
 

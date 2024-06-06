@@ -4,7 +4,7 @@ from django.db import models
 MAX_FIELD_LENGTH = 150
 
 
-class MyUser(AbstractUser):
+class FoodgramUser(AbstractUser):
     """Переопределение стандартного пользователя."""
 
     first_name = models.CharField('Имя', max_length=MAX_FIELD_LENGTH)
@@ -21,10 +21,10 @@ class Follow(models.Model):
     """Модель подписчиков."""
 
     user = models.ForeignKey(
-        MyUser, on_delete=models.CASCADE, related_name='subscriber',
+        FoodgramUser, on_delete=models.CASCADE, related_name='subscriber',
         verbose_name='Подписчик')
     following = models.ForeignKey(
-        MyUser, on_delete=models.CASCADE, related_name='following',
+        FoodgramUser, on_delete=models.CASCADE, related_name='following',
         verbose_name='Подписан на')
 
     class Meta:
@@ -40,6 +40,7 @@ class Follow(models.Model):
                 name='can_not_follow_youself'
             )
         ]
+        default_related_name = 'follows'
 
     def __str__(self):
         return self.user.username

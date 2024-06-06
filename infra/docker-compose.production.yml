@@ -22,10 +22,11 @@ services:
       - db
 
   frontend:
-    image: zhsv2/foodgram_frontend
+    image: infra-frontend
     env_file: .env
+    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - static:/app/result_build/
+      - static:/frontend_static
 
   nginx:
     image: nginx:1.19.3

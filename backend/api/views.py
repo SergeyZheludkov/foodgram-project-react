@@ -4,8 +4,8 @@ from os.path import join
 from django_filters.rest_framework import DjangoFilterBackend
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password, make_password
-from django.db.models import Count, F, Sum
+from django.contrib.auth.hashers import make_password
+from django.db.models import F, Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
@@ -21,11 +21,12 @@ from .filters import RecipeFilter, IngredientFilter
 from .paginator import RecipePagination
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializers import (
-    CustomUserSerializer, CustomUserCreateSerializer,
-    CustomAuthTokenSerializer, FavoriteAddSerializer,
+    APIUserSerializer, APIUserCreateSerializer,
+    APIAuthTokenSerializer, FavoriteAddSerializer,
     ShoppingCartAddSerializer, TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeCreateUpdateSerializer,
-    RecipeShortenInfoSerializer, UserSubscribeSerializer
+    RecipeShortenInfoSerializer, ResetPasswordeSerializer,
+    UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -43,36 +44,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ordering = ('-pub_date',)
 
     def get_queryset(self):
+        """Добавление полей is_favorited и is_in_shopping_cart."""
         queryset = Recipe.objects.prefetch_related('carts', 'favorites')
-        user = self.request.user
-
-        is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited is not None and not user.is_anonymous:
-            is_favorited = self.transform_to_int_filter_param(
-                'is_favorite', is_favorited
-            )
-            if is_favorited == 1:
-                queryset = queryset.filter(favorites__user=user)
-
-        is_in_cart = self.request.query_params.get(
-            'is_in_shopping_cart'
-        )
-        if is_in_cart is not None and not user.is_anonymous:
-            is_in_cart = self.transform_to_int_filter_param(
-                'is_in_shopping_cart', is_in_cart
-            )
-            if is_in_cart == 1:
-                queryset = queryset.filter(carts__user=user)
-
-        return queryset.annotate(is_favorited=Count(F('favorites')),
-                                 is_in_shopping_cart=Count(F('carts')))
-
-    def transform_to_int_filter_param(self, param_name, param_value):
-        try:
-            param_value = int(param_value)
-        except ValueError:
-            raise ValueError(f'Значение {param_name} должно быть 0 или 1!')
-        return param_value
+        return queryset
 
     def get_serializer_class(self):
         if self.action in {'create', 'partial_update'}:
@@ -92,22 +66,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def shopping_cart_download(self, request):
         """Формирование списка покупок."""
-        user = get_object_or_404(User, pk=request.user.id)
-        shopping_carts = user.carts.all()
-        recipe_list = [
-            shopping_cart.recipe
-            for shopping_cart in shopping_carts
-        ]
-        ingredients_recipes = IngredientRecipe.objects.filter(
-            recipe__in=recipe_list
+        ingredient_recipe_pks = request.user.carts.all().values(
+            'recipe__ingredient_recipe'
         )
-
-        # заполнение словаря: ингредиент-количество
-        shopping_cart = ingredients_recipes.values(
-            'ingredient__name'
-        ).annotate(
-            amount=Sum('amount')
-        )
+        shopping_cart = IngredientRecipe.objects.filter(
+            pk__in=ingredient_recipe_pks
+        ).values(name=F('ingredient__name')).annotate(amount=Sum('amount'))
 
         path = join(settings.MEDIA_ROOT, 'shopping_cart', 'list.csv')
         cart = open(path, "w+", newline='', encoding='utf-8')
@@ -118,8 +82,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         # заполнение файла данными
         for ingredient in shopping_cart:
-            csv_writer.writerow((ingredient['ingredient__name'],
-                                 ingredient['amount']))
+            csv_writer.writerow((ingredient['name'], ingredient['amount']))
 
         # response = FileResponse(cart,
         # content_type='application/vnd.ms-excel')
@@ -137,19 +100,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart_favorite_actions(self, request, pk, model):
 
         if request.method == 'DELETE':
+            # извлечение рецепта с одновременной проверкой его существования
             recipe = self.get_object()
-            deletion = model.objects.filter(user=request.user,
-                                            recipe=recipe).delete()
+
+            deletion_quantity, _ = model.objects.filter(user=request.user,
+                                                        recipe=recipe).delete()
             # проверяем количество удаленных объектов
-            if deletion[0] == 0:
+            if deletion_quantity == 0:
                 raise ParseError('Рецепт не отмечен!')
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        data = {'user': self.request.user.pk, 'recipe': pk}
+        model_data = {'user': self.request.user.pk, 'recipe': pk}
         if model == Favorite:
-            serializer = FavoriteAddSerializer(data=data)
+            serializer = FavoriteAddSerializer(data=model_data)
         else:
-            serializer = ShoppingCartAddSerializer(data=data)
+            serializer = ShoppingCartAddSerializer(data=model_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -172,9 +137,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class CustomUserViewSet(viewsets.ModelViewSet):
+class APIUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
     pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
@@ -185,10 +149,12 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return CustomUserCreateSerializer
+            return APIUserCreateSerializer
         if self.action in {'subscription_create_delete', 'subscriptions'}:
             return UserSubscribeSerializer
-        return CustomUserSerializer
+        if self.action == 'reset_password':
+            return ResetPasswordeSerializer
+        return APIUserSerializer
 
     @action(url_path='me', detail=False,
             permission_classes=(IsAuthenticated,))
@@ -201,12 +167,10 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def reset_password(self, request):
         """Замена пароля."""
-        password = request.data.get('current_password')
-        if not check_password(password, request.user.password):
-            return Response('Неверный текущий пароль!',
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        new_password = make_password(request.data.get('new_password'))
+        new_password = make_password(serializer.data.get('new_password'))
         self.request.user.password = new_password
         self.request.user.save()
 
@@ -216,51 +180,53 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             permission_classes=(IsAuthenticated,))
     def subscription_create_delete(self, request, pk):
         """Добавление и удаление подписки."""
-        following = self.get_object()
+        user_obj = self.get_object()
+        user = request.user
 
         if request.method == 'DELETE':
-            deletion = following.following.filter(
-                user_id=request.user.pk
-            ).delete()
-            if deletion[0] == 0:
+            deletion_quantity, _ = user.subscriber.filter(
+                following=user_obj).delete()
+            if deletion_quantity == 0:
                 return Response('Такой подписки нет!',
                                 status=status.HTTP_400_BAD_REQUEST)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if following == request.user:
+        if user_obj == user:
             return Response('Невозможно подписаться на самого себя!',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if Follow.objects.filter(
-            user=request.user, following=following
-        ).exists():
+        if user.subscriber.filter(following=user_obj).exists():
             return Response('Уже подписан!',
                             status=status.HTTP_400_BAD_REQUEST)
 
-        Follow.objects.create(user=request.user, following=following)
-        serializer = self.get_serializer(following)
+        Follow.objects.create(user=request.user, following=user_obj)
+        serializer = self.get_serializer(user_obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(url_path='subscriptions', detail=False,
             permission_classes=(IsAuthenticated,))
     def subscriptions(self, request):
         """Список подписок пользователя."""
-        user = self.request.user
-        following_list = user.subscriber.all().values_list('following')
-        subscribed_on = User.objects.filter(pk__in=following_list)
+        subscribed_on = User.objects.filter(
+            following__in=request.user.subscriber.all()
+        )
         subscribed_on = self.paginate_queryset(subscribed_on)
 
         serializer = self.get_serializer(subscribed_on, many=True)
         return self.get_paginated_response(serializer.data)
 
 
-class CustomObtainAuthToken(ObtainAuthToken):
-    serializer_class = CustomAuthTokenSerializer
+class APIObtainAuthToken(ObtainAuthToken):
+    serializer_class = APIAuthTokenSerializer
 
     def post(self, request, *args, **kwargs):
         """Изменение ключа в ответе с 'token' на 'auth_token'."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+
+        # наличие такого user проверяется ранее в валидаторе сериализатора
+        user = get_object_or_404(User,
+                                 email=serializer.validated_data.get('email'))
         token, _ = Token.objects.get_or_create(user=user)
+
         return Response({'auth_token': token.key})

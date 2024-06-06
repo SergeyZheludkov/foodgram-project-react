@@ -76,9 +76,9 @@ class IngredientRecipe(models.Model):
     """Модель для описания ингредиентов в рецепте."""
 
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
-                                   verbose_name='Ингредиент')
+                                   verbose_name='Ингредиент', null=True)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
-                               verbose_name='Рецепт')
+                               verbose_name='Рецепт', null=True)
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество', validators=[MinValueValidator(1)])
 
@@ -100,9 +100,10 @@ class IngredientRecipe(models.Model):
 class TagRecipe(models.Model):
     """Модель для описания тэгов в рецепте."""
 
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name='Тэг')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE,
+                            verbose_name='Тэг', null=True)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
-                               verbose_name='Рецепт')
+                               verbose_name='Рецепт', null=True)
 
     class Meta:
         verbose_name = 'тэги рецепта'

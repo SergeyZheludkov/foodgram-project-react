@@ -13,6 +13,7 @@ class FollowAdmin(admin.ModelAdmin):
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'email')
     list_filter = ('username', 'email')
+    search_fields = ('username', 'email')
 
 
 admin.site.register(User, UserAdmin)

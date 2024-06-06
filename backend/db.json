@@ -17539,7 +17539,7 @@
     "name": "Нечто съедобное (пробовать на свой страх и риск)",
     "text": "Приготовьте как нибудь эти ингредиеты, не забудьте посолить.",
     "cooking_time": 12,
-    "pub_date": "2024-05-30T08:55:29.678Z"
+    "pub_date": "2024-06-04T05:58:12.785Z"
   }
 },
 {
@@ -17547,11 +17547,11 @@
   "pk": 2,
   "fields": {
     "author": 3,
-    "image": "recipes/images/temp_5OfWSlu.png",
+    "image": "recipes/images/temp_yRtRrQc.png",
     "name": "Еще одна попытка приготовить еду",
     "text": "Вероятно стоит это смешать.",
     "cooking_time": 10,
-    "pub_date": "2024-05-30T08:55:30.053Z"
+    "pub_date": "2024-06-04T05:58:13.237Z"
   }
 },
 {
@@ -17559,11 +17559,11 @@
   "pk": 3,
   "fields": {
     "author": 3,
-    "image": "recipes/images/temp_L5NOzaY.png",
+    "image": "recipes/images/temp_7b2jfQ2.png",
     "name": "Еда без дополнительной обработки",
     "text": "Просто съесть",
     "cooking_time": 1,
-    "pub_date": "2024-05-30T08:55:30.360Z"
+    "pub_date": "2024-06-04T05:58:13.654Z"
   }
 },
 {
@@ -17571,11 +17571,11 @@
   "pk": 4,
   "fields": {
     "author": 3,
-    "image": "recipes/images/temp_c8YuCfh.png",
+    "image": "recipes/images/temp_2uEnN6U.png",
     "name": "Нечто жареное",
     "text": "Жарить 10 минут",
     "cooking_time": 10,
-    "pub_date": "2024-05-30T08:55:30.595Z"
+    "pub_date": "2024-06-04T05:58:14.076Z"
   }
 },
 {
@@ -17583,11 +17583,11 @@
   "pk": 5,
   "fields": {
     "author": 2,
-    "image": "recipes/images/temp_qlYfeAD.png",
+    "image": "recipes/images/temp_mNYLMBy.png",
     "name": "Варёное нечто",
     "text": "Варить 20 минут",
     "cooking_time": 25,
-    "pub_date": "2024-05-30T08:55:30.906Z"
+    "pub_date": "2024-06-04T05:58:14.309Z"
   }
 },
 {
@@ -17709,34 +17709,34 @@
   }
 },
 {
-  "model": "users.myuser",
+  "model": "users.foodgramuser",
   "pk": 1,
   "fields": {
-    "password": "pbkdf2_sha256$260000$7BwbDOkhr2WdY84ITyqFfZ$iQBePkmOCUJjx7I9mAdFOdNjlYngo0tQx2JNM9zfiR0=",
-    "last_login": "2024-05-30T08:43:43.174Z",
+    "password": "pbkdf2_sha256$260000$7KRLoAYIASrmsJzlzlaPuv$TdK4RhcmOW9LMDXfHy/pkVCDEZJgDlp1Bn86fSbRUCg=",
+    "last_login": "2024-06-04T04:55:49Z",
     "is_superuser": true,
-    "username": "admin",
+    "username": "Sergey",
     "is_staff": true,
     "is_active": true,
-    "date_joined": "2024-05-30T08:40:35.275Z",
-    "first_name": "",
-    "last_name": "",
+    "date_joined": "2024-06-04T04:49:55Z",
+    "first_name": "Сергей",
+    "last_name": "Желудков",
     "email": "zhsv2@yandex.ru",
     "groups": [],
     "user_permissions": []
   }
 },
 {
-  "model": "users.myuser",
+  "model": "users.foodgramuser",
   "pk": 2,
   "fields": {
-    "password": "pbkdf2_sha256$260000$Ypu1H9eIYA57gp3mT5hKqb$q6BV7edM7lfwM+dtAzbFKbEkbXYghCqa+WLqHzUfEPw=",
+    "password": "pbkdf2_sha256$260000$LlmBgyW3py0WACNEMl8oVP$Ld8Jewoo4zKQ0rIBfK9oVGmkohsXO/UtrPuu2m3I6Pk=",
     "last_login": null,
     "is_superuser": false,
     "username": "vasya.pupkin",
     "is_staff": false,
     "is_active": true,
-    "date_joined": "2024-05-30T08:55:19.993Z",
+    "date_joined": "2024-06-04T05:58:04.301Z",
     "first_name": "Вася",
     "last_name": "Пупкин",
     "email": "vpupkin@yandex.ru",
@@ -17745,16 +17745,16 @@
   }
 },
 {
-  "model": "users.myuser",
+  "model": "users.foodgramuser",
   "pk": 3,
   "fields": {
-    "password": "pbkdf2_sha256$260000$3y4FTLV4QwGpNj8GG0YJ1d$UDLVgdqfAITGV+/u41FHgGVmFsrSWhIBQoPfIaevn6Y=",
+    "password": "pbkdf2_sha256$260000$gnnVfwoPFyyAElYBcZ2lH7$bhsQ7JSiXKjx2QPy4GqkzYZRfk/ebw70KFvVUydAmnI=",
     "last_login": null,
     "is_superuser": false,
     "username": "second-user",
     "is_staff": false,
     "is_active": true,
-    "date_joined": "2024-05-30T08:55:20.367Z",
+    "date_joined": "2024-06-04T05:58:04.743Z",
     "first_name": "Андрей",
     "last_name": "Макаревский",
     "email": "second_user@email.org",
@@ -17763,16 +17763,16 @@
   }
 },
 {
-  "model": "users.myuser",
+  "model": "users.foodgramuser",
   "pk": 4,
   "fields": {
-    "password": "pbkdf2_sha256$260000$GiUEQxbuQFQDtOjavz5tA3$EA8w9wb107+IuqrGNDDW+WgTpujxp2aVUy77Gl1VyQ8=",
+    "password": "pbkdf2_sha256$260000$y2hnkzNm0qOZ2KMyCVlPUA$3KlCdaJrnsDNfaCLDLBqpdx3TfhXwVpoHKl81+/G25U=",
     "last_login": null,
     "is_superuser": false,
     "username": "third-user-username",
     "is_staff": false,
     "is_active": true,
-    "date_joined": "2024-05-30T08:55:20.695Z",
+    "date_joined": "2024-06-04T05:58:05.075Z",
     "first_name": "Гордон",
     "last_name": "Рамзиков",
     "email": "third-user@user.ru",
