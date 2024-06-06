@@ -5,6 +5,8 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt --no-cache-dir
 COPY . .
 
+CMD ["gunicorn", "--bind" "0.0.0.0:8000", "foodgram.wsgi"]
+
 # команды для миграции, загрузки тестовых данных (включая, суперюзера),
 # сборки статики и запуска сервера gunicorn
-ENTRYPOINT ["sh", "app/entrypoint.sh"]
+# ENTRYPOINT ["sh", "app/entrypoint.sh"]
