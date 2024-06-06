@@ -19,9 +19,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'test_key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['51.250.23.210', '127.0.0.1', 'localhost',
-                 'zhsv-foodgram.crabdance.com']
-
+ALLOWED_HOSTS = ['51.250.23.210', '127.0.0.1', 'localhost', 'zhsv-foodgram.crabdance.com']
 
 # Application definition
 
@@ -78,10 +76,6 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        # для отладки
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
-        # для продакшн
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('POSTGRES_DB', 'django'),
         'USER': os.getenv('POSTGRES_USER', 'django'),

@@ -73,7 +73,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk__in=ingredient_recipe_pks
         ).values(name=F('ingredient__name')).annotate(amount=Sum('amount'))
 
-        path = join(settings.MEDIA_ROOT, 'shopping_cart', 'list.csv')
+        path = join(settings.MEDIA_ROOT, 'shopping_cart', 'shopping-list.csv')
         cart = open(path, "w+", newline='', encoding='utf-8')
         cart.truncate()
         csv_writer = csv.writer(cart)
@@ -84,10 +84,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         for ingredient in shopping_cart:
             csv_writer.writerow((ingredient['name'], ingredient['amount']))
 
-        # response = FileResponse(cart,
-        # content_type='application/vnd.ms-excel')
         response = FileResponse(cart, content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=list.csv'
+        response[
+            'Content-Disposition'] = 'attachment; filename=shopping-list.csv'
 
         return response
 
@@ -137,7 +136,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class APIUserViewSet(viewsets.ModelViewSet):
+class FoodgramUserViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthorOrAdminOrReadOnly,)
     queryset = User.objects.all()
     pagination_class = LimitOffsetPagination
 
