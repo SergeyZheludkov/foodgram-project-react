@@ -142,8 +142,8 @@ class FoodgramUserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in {'create', 'list', 'retrieve'}:
-            return [AllowAny(),]
-        return [IsAuthenticated(),]
+            return [AllowAny(), ]
+        return [IsAuthenticated(), ]
 
     def perform_create(self, serializer):
         password = self.request.data.get('password')
