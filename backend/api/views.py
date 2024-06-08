@@ -77,7 +77,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         cart = open(path, "w+", newline='', encoding='utf-8')
         cart.truncate()
         csv_writer = csv.writer(cart)
-        csv_writer.writerow(('Список покупок',))
+        # csv_writer.writerow(('Список покупок',))
         csv_writer.writerow(('Ингредиент', 'Количество'))
 
         # заполнение файла данными

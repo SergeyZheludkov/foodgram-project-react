@@ -46,6 +46,7 @@ class APIUserCreateSerializer(serializers.ModelSerializer):
 
 class ResetPasswordeSerializer(serializers.Serializer):
     """Сериализатор при замене пароля."""
+
     current_password = serializers.CharField(required=True, allow_blank=False)
     new_password = serializers.CharField(required=True, allow_blank=False)
 

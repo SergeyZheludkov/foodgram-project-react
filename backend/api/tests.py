@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 
 
 class FoodgramAPITestCase(TestCase):
+
     def setUp(self):
         self.guest_client = Client()
 
