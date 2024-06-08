@@ -31,7 +31,6 @@ from .serializers import (
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
 )
-from users.models import Follow
 
 User = get_user_model()
 
