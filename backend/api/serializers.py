@@ -12,6 +12,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart,
                             Tag, TagRecipe, IngredientRecipe)
+from users.models import Follow
 
 User = get_user_model()
 
@@ -333,6 +334,35 @@ class ShoppingCartAddSerializer(FavoriteShoppingCartAddSerializer):
                 message='Рецепт уже отмечен!'
             )
         ]
+
+
+class SubscriptionAddSerializer(FavoriteShoppingCartAddSerializer):
+    """Сериализатор для добавления подписок."""
+
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    following = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Follow
+        fields = ('user', 'following')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=('user', 'following'),
+                message='Уже подписан!'
+            )
+        ]
+
+    def validate(self, data):
+        user = data.get('user')
+        following = data.get('following')
+        if user and user == following:
+            raise serializers.ValidationError(
+                'Невозможно подписаться на самого себя!')
+        return data
+
+    def create(self, validated_data):
+        return Follow.objects.create(**validated_data)
 
 
 class APIAuthTokenSerializer(serializers.Serializer):

@@ -26,7 +26,7 @@ from .serializers import (
     ShoppingCartAddSerializer, TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeCreateUpdateSerializer,
     RecipeShortenInfoSerializer, ResetPasswordeSerializer,
-    UserSubscribeSerializer
+    SubscriptionAddSerializer, UserSubscribeSerializer
 )
 from recipes.models import (
     Ingredient, IngredientRecipe, Favorite, Recipe, ShoppingCart, Tag
@@ -77,7 +77,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         cart = open(path, "w+", newline='', encoding='utf-8')
         cart.truncate()
         csv_writer = csv.writer(cart)
-        # csv_writer.writerow(('Список покупок',))
+        csv_writer.writerow(('Список покупок',))
         csv_writer.writerow(('Ингредиент', 'Количество'))
 
         # заполнение файла данными
@@ -88,6 +88,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response[
             'Content-Disposition'] = 'attachment; filename=shopping-list.csv'
 
+        # Файл выгружается и заполняется данными локально, в пределах backend,
+        # но не выгружается на боевом сервере.
+        # Возможно, требуется дополнительная настройка фронта.
         return response
 
     @action(('post', 'delete'), url_path='favorite', detail=True,
@@ -191,21 +194,17 @@ class FoodgramUserViewSet(viewsets.ModelViewSet):
             deletion_quantity, _ = user.subscriber.filter(
                 following=user_obj).delete()
             if deletion_quantity == 0:
-                return Response('Такой подписки нет!',
-                                status=status.HTTP_400_BAD_REQUEST)
+                raise ParseError('Такой подписки нет!')
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if user_obj == user:
-            return Response('Невозможно подписаться на самого себя!',
-                            status=status.HTTP_400_BAD_REQUEST)
+        serializer = SubscriptionAddSerializer(
+            data={'user': user.pk, 'following': pk})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        if user.subscriber.filter(following=user_obj).exists():
-            return Response('Уже подписан!',
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        Follow.objects.create(user=request.user, following=user_obj)
-        serializer = self.get_serializer(user_obj)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer_for_output = self.get_serializer(user_obj)
+        return Response(serializer_for_output.data,
+                        status=status.HTTP_201_CREATED)
 
     @action(url_path='subscriptions', detail=False,
             permission_classes=(IsAuthenticated,))
