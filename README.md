@@ -1,19 +1,11 @@
-# Проект «Фудграм»
+## О проекте: 
 
-![workflow status](https://github.com/SergeyZheludkov/foodgram-project-react/actions/workflows/main.yml/badge.svg)
-
-## Описание
-
-Дипломный проект "Яндекс.Практикум" по курсу "Python-разработчик буткемп"
+**Проект для демонстрации полного цикла разработки и деплоя приложения, созданного при помощи фреймворка Django.**
 
 Развернут на домене: https://zhsv-foodgram.crabdance.com/
 
-Данные для входа администратора: 
- - логин: zhsv2@yandex.ru
- - пароль: admin
-
 Функционал:
- - сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов. Пользователям сайта также доступен сервис «Список покупок».
+ - сайт, на котором пользователи могут публиковать рецепты, добавлять чужие рецепты в избранное и подписываться на публикации других авторов.
 
 ## Использованные технологии
 
@@ -23,17 +15,26 @@ https://docs.djangoproject.com/en/  3.2/
 Django REST Framework 3.12 - библиотека Django для разработки REST API
 https://www.django-rest-framework.org/ 
 
+
+**Фронтенд создан в виде SPA-приложения на React** 
+
+**Для CI/CD используются:**
+
+- Docker Compose
+- GitHub Action
+
 ## Как запустить проект:
 
 Клонировать репозиторий и перейти в него в командной строке:
 
 ```
-git clone git@github.com:SergeyZheludkov/foodgram-project-react.git 
+git clone https://github.com/SergeyZheludkov/foodgram-project-react.git
 ```
 
 ```
 cd foodgram-project-react
 ```
+Создайте файл .env по образцу .env.example. 
 
 Cоздать и активировать виртуальное окружение:
 
@@ -142,7 +143,8 @@ python manage.py load_ingredients
 
 Получение информации о конкретном ингредиенте - GET запрос на эндпоинт:  /api/ingredients/{id}/
 
-## Автор
+____
 
-Сергей Желудков
-(Github: [@SergeyZheludkov](https://github.com/SergeyZheludkov/))
+**Сергей Желудков** 
+
+Github: [@SergeyZheludkov](https://github.com/SergeyZheludkov/)
